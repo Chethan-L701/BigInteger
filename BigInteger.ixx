@@ -13,13 +13,10 @@ private:
 	void __init(i64 num);
 	bool __empty();
 	void __trim_left();
-	BigInteger __add_two_positive(BigInteger &val);
-	BigInteger __sub_two_positive(BigInteger val);
-	BigInteger __mult_two_positive(BigInteger &val);
-	BigInteger __add_two_negative(BigInteger &val);
+	BigInteger __add(BigInteger &val);
+	BigInteger __sub(BigInteger val);
+	BigInteger __mult(BigInteger &val);
 	static BigInteger __sub(BigInteger val1,BigInteger val2);
-	BigInteger __mult_two_negative(BigInteger &val);
-	BigInteger __mult_with_one_negative(BigInteger &val);
 public:
 	// Constructors
 	BigInteger(std::string num);
@@ -89,7 +86,7 @@ void BigInteger::__trim_left() {
 	digits = std::vector<short>(digits.begin() + count, digits.end());
 }
 
-BigInteger BigInteger::__add_two_positive(BigInteger &val) {
+BigInteger BigInteger::__add(BigInteger &val) {
 	int carry = 0;
 	BigInteger sum;
 	sum.negative = false;
@@ -129,7 +126,7 @@ BigInteger BigInteger::__add_two_positive(BigInteger &val) {
 	return sum;
 }
 
-BigInteger BigInteger::__mult_two_positive(BigInteger& val) {
+BigInteger BigInteger::__mult(BigInteger& val) {
 	BigInteger product{};
 	product.negative = false;
 	int carry = 0;
@@ -194,7 +191,7 @@ BigInteger BigInteger::__sub(BigInteger val1, BigInteger val2) {
 	return value;
 }
 
-BigInteger BigInteger::__sub_two_positive(BigInteger val) {
+BigInteger BigInteger::__sub(BigInteger val) {
 	if (*this > val) {
 		return __sub(*this, val);
 	}
@@ -208,22 +205,6 @@ BigInteger BigInteger::__sub_two_positive(BigInteger val) {
 	}
 }
 
-BigInteger BigInteger::__add_two_negative(BigInteger &val) {
-	BigInteger sum = __add_two_positive(val);
-	sum.negative = true;
-	return sum;
-}
-BigInteger BigInteger::__mult_two_negative(BigInteger &val) {
-	BigInteger product = __mult_two_positive(val);
-	product.negative = false;
-	return product;
-}
-
-BigInteger BigInteger::__mult_with_one_negative(BigInteger &val) {
-	BigInteger product = __mult_two_positive(val);
-	product.negative = true;
-	return product;
-}
 
 BigInteger::BigInteger() : digits{}, negative{false}{}
 BigInteger::BigInteger(std::string num) : digits{}, negative{ false } {
@@ -309,7 +290,7 @@ bool BigInteger::operator>=(BigInteger val) {
 BigInteger BigInteger::operator+(BigInteger val) {
 	if (!this->negative) {
 		if (!val.negative)
-			return __add_two_positive(val);
+			return __add(val);
 		else {
 			BigInteger b = val;
 			b.negative = false;
@@ -319,7 +300,10 @@ BigInteger BigInteger::operator+(BigInteger val) {
 	}
 	else if (this->negative) {
 		if (val.negative) {
-			return __add_two_negative(val);
+			BigInteger sum = __add(val);
+			sum.negative = true;
+			return sum;
+
 		}
 		else {
 			BigInteger a = *this;
@@ -331,11 +315,17 @@ BigInteger BigInteger::operator+(BigInteger val) {
 
 BigInteger BigInteger::operator*(BigInteger val) {
 	if (!(this->negative || val.negative))
-		return __mult_two_positive(val);
-	else if (this->negative && val.negative)
-		return __mult_two_negative(val);
-	else if (this->negative ^ val.negative)
-		return __mult_with_one_negative(val);
+		return __mult(val);
+	else if (this->negative && val.negative) {
+		BigInteger product = __mult(val);
+		product.negative = false;
+		return product;
+	}
+	else if (this->negative ^ val.negative) {
+		BigInteger product = __mult(val);
+		product.negative = true;
+		return product;
+	}
 	return BigInteger(0);
 }
 
@@ -366,7 +356,7 @@ BigInteger BigInteger::operator-(BigInteger val) {
 			return *this + b;
 		}
 		else
-			return __sub_two_positive(val);
+			return __sub(val);
 	}
 	else if (this->negative) {
 		if (val.negative)
